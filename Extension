@@ -1,0 +1,42 @@
+(function() {
+  class BotExtension {
+    constructor() {
+      this.telegramToken = '';
+      this.maxApiKey = '';
+    }
+
+    // Установка API токена Telegram
+    setTelegramToken(token) {
+      this.telegramToken = token;
+    }
+
+    // Установка API ключа MAX
+    setMaxApiKey(apiKey) {
+      this.maxApiKey = apiKey;
+    }
+
+    // Отправка сообщения в Telegram
+    sendTelegramMessage(chatId, message) {
+      if (!this.telegramToken) {
+        console.error('Telegram токен не установлен');
+        return;
+      }
+      const url = `https://api.telegram.org/bot${this.telegramToken}/sendMessage`;
+      fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message
+        })
+      }).then(response => response.json())
+        .then(data => console.log('Ответ Telegram:', data))
+        .catch(error => console.error('Ошибка:', error));
+    }
+
+    // Аналогичные методы для MAX можно добавить здесь
+  }
+
+  // Экспортируем расширение
+  window.TurboWarpBotExtension = new BotExtension();
+})();
