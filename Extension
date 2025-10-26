@@ -1,42 +1,103 @@
 (function() {
-  class BotExtension {
+  class SocialExtensions {
     constructor() {
-      this.telegramToken = '';
-      this.maxApiKey = '';
+      this.telegramToken = ""; // Вставьте сюда токен Telegram бота
+      this.vkToken = ""; // Вставьте сюда токен VK
+      this.maxToken = ""; // Вставьте сюда токен MAX от VK (если требуется)
     }
 
-    // Установка API токена Telegram
-    setTelegramToken(token) {
-      this.telegramToken = token;
-    }
-
-    // Установка API ключа MAX
-    setMaxApiKey(apiKey) {
-      this.maxApiKey = apiKey;
-    }
-
-    // Отправка сообщения в Telegram
+    // Отправить сообщение в Telegram
     sendTelegramMessage(chatId, message) {
-      if (!this.telegramToken) {
-        console.error('Telegram токен не установлен');
-        return;
-      }
       const url = `https://api.telegram.org/bot${this.telegramToken}/sendMessage`;
-      fetch(url, {
+      return fetch(url, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message
-        })
-      }).then(response => response.json())
-        .then(data => console.log('Ответ Telegram:', data))
-        .catch(error => console.error('Ошибка:', error));
+        body: JSON.stringify({chat_id: chatId, text: message})
+      }).then(response => response.json());
     }
 
-    // Аналогичные методы для MAX можно добавить здесь
+    // Отправить сообщение в VK
+    sendVKMessage(userId, message) {
+      const url = `https://api.vk.com/method/messages.send?access_token=${this.vkToken}&user_id=${userId}&message=${encodeURIComponent(message)}&v=5.131`;
+      return fetch(url).then(response => response.json());
+    }
+
+    // Отправить сообщение через MAX API VK
+    sendMAXMessage(recipientId, message) {
+      // Предполагаем, что MAX API использует тот же токен, что и VK
+      // или есть отдельный токен, который нужно вставить
+      const url = `https://max.api.vk.com/messages.send?access_token=${this.maxToken}&peer_id=${recipientId}&message=${encodeURIComponent(message)}&v=5.131`;
+      return fetch(url).then(response => response.json());
+    }
   }
 
-  // Экспортируем расширение
-  window.TurboWarpBotExtension = new BotExtension();
+  const extension = new SocialExtensions();
+
+  Scratch.extensions.register({
+    getInfo() {
+      return {
+        id: 'socialApi',
+        name: 'Telegram VK MAX',
+        blocks: [
+          {
+            opcode: 'sendTelegram',
+            blockType: 'command',
+            text: 'отправить в Telegram [CHAT_ID] сообщение [MESSAGE]',
+            arguments: {
+              CHAT_ID: {
+                type: 'string',
+                defaultValue: '123456789'
+              },
+              MESSAGE: {
+                type: 'string',
+                defaultValue: 'Привет!'
+              }
+            }
+          },
+          {
+            opcode: 'sendVK',
+            blockType: 'command',
+            text: 'отправить в VK [USER_ID] сообщение [MESSAGE]',
+            arguments: {
+              USER_ID: {
+                type: 'string',
+                defaultValue: '123456789'
+              },
+              MESSAGE: {
+                type: 'string',
+                defaultValue: 'Привет!'
+              }
+            }
+          },
+          {
+            opcode: 'sendMAX',
+            blockType: 'command',
+            text: 'отправить через MAX [RECIPIENT_ID] сообщение [MESSAGE]',
+            arguments: {
+              RECIPIENT_ID: {
+                type: 'string',
+                defaultValue: '123456789'
+              },
+              MESSAGE: {
+                type: 'string',
+                defaultValue: 'Привет!'
+              }
+            }
+          }
+        ]
+      };
+    },
+
+    sendTelegram(args) {
+      return extension.sendTelegramMessage(args.CHAT_ID, args.MESSAGE);
+    },
+
+    sendVK(args) {
+      return extension.sendVKMessage(args.USER_ID, args.MESSAGE);
+    },
+
+    sendMAX(args) {
+      return extension.sendMAXMessage(args.RECIPIENT_ID, args.MESSAGE);
+    }
+  });
 })();
